@@ -1,0 +1,15 @@
+# Fichiers et dossiers exclus des backups
+
+# Temporaires et caches
+*.tmp
+*.temp
+.cache
+.Trash-*
+*/.Trash-*
+
+# Thumbnails
+.thumbnails
+.gvfs
+
+# Fichiers système
+lost+found

@@ -1,0 +1,23 @@
+[Unit]
+Description=Restic backup vers Backblaze B2
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+
+# Charger les variables d'environnement depuis le fichier .env du projet
+EnvironmentFile=%h/dev/backup/.env
+
+ExecStart=/usr/bin/task --dir %h/dev/backup backup
+
+# Laisser du temps au réseau en cas de lancement au démarrage
+ExecStartPre=/bin/sleep 30
+
+StandardOutput=journal
+StandardError=journal
+
+# Éviter de surcharger le réseau
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

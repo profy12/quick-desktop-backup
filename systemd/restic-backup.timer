@@ -1,0 +1,15 @@
+[Unit]
+Description=Backup quotidien avec restic vers Backblaze B2
+
+[Timer]
+# Tous les jours à 02h00
+OnCalendar=*-*-* 02:00:00
+
+# Si le poste était éteint à l'heure prévue, lancer dès le prochain démarrage
+Persistent=true
+
+# Ajouter un délai aléatoire pour éviter les pics de charge réseau
+RandomizedDelaySec=10min
+
+[Install]
+WantedBy=timers.target

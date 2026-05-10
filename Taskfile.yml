@@ -1,0 +1,111 @@
+version: "3"
+
+dotenv:
+  - .env
+
+vars:
+  # Ajoute autant de chemins que nécessaire, séparés par des espaces
+  BACKUP_SOURCES: >-
+    {{.HOME}}/Documents
+  EXCLUDES_FILE: "{{.ROOT_DIR}}/restic-excludes.txt"
+  SYSTEMD_DIR: "{{.HOME}}/.config/systemd/user"
+
+tasks:
+  default:
+    desc: Afficher les tâches disponibles
+    cmds:
+      - task --list
+
+  # --- Repository ---
+
+  init:
+    desc: Initialiser le dépôt restic sur Backblaze B2
+    cmd: restic init
+
+  # --- Backup ---
+
+  backup:
+    desc: Lancer un backup complet
+    cmds:
+      - task: backup:run
+      - task: prune
+
+  backup:run:
+    desc: Sauvegarder les fichiers (sans pruning)
+    cmd: >
+      restic backup
+      --exclude-file={{.EXCLUDES_FILE}}
+      --tag=workstation
+      {{.BACKUP_SOURCES}}
+
+  # --- Maintenance ---
+
+  prune:
+    desc: Supprimer les anciens snapshots selon la politique de rétention
+    cmd: >
+      restic forget
+      --keep-daily 7
+      --keep-weekly 4
+      --keep-monthly 6
+      --keep-yearly 1
+      --prune
+      --tag=workstation
+
+  check:
+    desc: Vérifier l'intégrité du dépôt restic
+    cmd: restic check
+
+  check:full:
+    desc: Vérifier l'intégrité complète (lit toutes les données — lent)
+    cmd: restic check --read-data
+
+  # --- Inspection ---
+
+  snapshots:
+    desc: Lister les snapshots disponibles
+    cmd: restic snapshots --tag=workstation
+
+  stats:
+    desc: Afficher les statistiques du dépôt
+    cmd: restic stats
+
+  # --- Restauration ---
+
+  restore:
+    desc: Restaurer un snapshot (SNAPSHOT_ID=latest, TARGET=~/restore)
+    vars:
+      SNAPSHOT_ID: '{{.SNAPSHOT_ID | default "latest"}}'
+      TARGET: '{{.TARGET | default (printf "%s/restore" .HOME)}}'
+    cmd: restic restore {{.SNAPSHOT_ID}} --target {{.TARGET}}
+
+  # --- Systemd ---
+
+  systemd:install:
+    desc: Installer le service et le timer systemd (user scope)
+    cmds:
+      - mkdir -p {{.SYSTEMD_DIR}}
+      - cp {{.ROOT_DIR}}/systemd/restic-backup.service {{.SYSTEMD_DIR}}/
+      - cp {{.ROOT_DIR}}/systemd/restic-backup.timer {{.SYSTEMD_DIR}}/
+      - systemctl --user daemon-reload
+      - echo "Service et timer installés. Lance 'task systemd:enable' pour activer."
+
+  systemd:enable:
+    desc: Activer et démarrer le timer systemd
+    cmds:
+      - systemctl --user enable --now restic-backup.timer
+      - systemctl --user status restic-backup.timer
+
+  systemd:disable:
+    desc: Désactiver le timer systemd
+    cmd: systemctl --user disable --now restic-backup.timer
+
+  systemd:status:
+    desc: Voir l'état du timer et du dernier backup
+    cmds:
+      - systemctl --user status restic-backup.timer
+      - echo "---"
+      - journalctl --user -u restic-backup.service -n 50 --no-pager
+
+  systemd:run-now:
+    desc: Déclencher le backup manuellement via systemd
+    cmd: systemctl --user start restic-backup.service
