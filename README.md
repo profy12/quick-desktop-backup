@@ -83,19 +83,11 @@ task restore SNAPSHOT_ID=abc123 TARGET=/tmp/restore
 
 ## Sources sauvegardées
 
-Par défaut : `~/Documents`
+Définis la variable `BACKUP_SOURCES` dans ton fichier `.env` avec les chemins séparés par des espaces :
 
-Pour sauvegarder plusieurs répertoires, édite la variable `BACKUP_SOURCES` dans le [Taskfile.yml](Taskfile.yml) :
-
-```yaml
-vars:
-  BACKUP_SOURCES: >-
-    /home/aurelien/Documents
-    /home/aurelien/dev
-    /home/aurelien/.config
+```bash
+BACKUP_SOURCES=/home/aurelien/Documents /home/aurelien/dev /home/aurelien/.config
 ```
-
-Chaque chemin sur sa propre ligne (indenté), restic les reçoit comme arguments séparés.
 
 ## Sécurité
 

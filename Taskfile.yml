@@ -4,9 +4,6 @@ dotenv:
   - .env
 
 vars:
-  # Ajoute autant de chemins que nécessaire, séparés par des espaces
-  BACKUP_SOURCES: >-
-    {{.HOME}}/Documents
   EXCLUDES_FILE: "{{.ROOT_DIR}}/restic-excludes.txt"
   SYSTEMD_DIR: "{{.HOME}}/.config/systemd/user"
 
@@ -36,7 +33,7 @@ tasks:
       restic backup
       --exclude-file={{.EXCLUDES_FILE}}
       --tag=workstation
-      {{.BACKUP_SOURCES}}
+      $BACKUP_SOURCES
 
   # --- Maintenance ---
 
